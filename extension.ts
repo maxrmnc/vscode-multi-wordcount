@@ -10,25 +10,36 @@ export function activate(ctx: ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "Wordcount" is now active!');
 
+
     // create a new word counter
     let wordCounter = new WordCounter();
     let controller = new WordCounterController(wordCounter);
+    const command = 'multiWordCount.resetValue';
 
     // add to a list of disposables which are disposed when this extension
     // is deactivated again.
     ctx.subscriptions.push(controller);
     ctx.subscriptions.push(wordCounter);
+    ctx.subscriptions.push(commands.registerCommand(command, wordCounter.reset));
 }
+
+
 
 export class WordCounter {
 
     private _statusBarItem: StatusBarItem;
+    private totalWC = 0;
+
+    public reset(){
+        this.totalWC = 0;
+    }
 
     public updateWordCount() {
         
         // Create as needed
         if (!this._statusBarItem) {
             this._statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left);
+            this._statusBarItem.command = this.reset();
         } 
 
         // Get the current text editor
@@ -43,7 +54,7 @@ export class WordCounter {
         // Only update status if an MD file
         if (doc.languageId === "markdown") {
             let wordCount = this._getWordCount(doc);
-
+            this.totalWC = this.totalWC + wordCount;
             // Update the status bar
             this._statusBarItem.text = wordCount !== 1 ? `$(pencil) ${wordCount} Words` : '$(pencil) 1 Word';
             this._statusBarItem.show();
